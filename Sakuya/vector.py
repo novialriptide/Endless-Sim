@@ -1,3 +1,5 @@
+import math
+
 class vector:
     def __init__(self, x: float, y: float):
         self.x = x
@@ -15,5 +17,19 @@ class vector:
     def __mul__(self, other: float):
         return vector(self.x * other, self.y * other)
 
+    def __truediv__(self, other: float):
+        return vector(self.x / other, self.y / other)
+
     def __and__(self, other):
         return self.x == other.x and self.y == other.y
+
+    def to_list(self):
+        return [self.x, self.y]
+        
+    def rotate(self, angle):
+        angle = math.radians(angle)
+        self.x = self.x * math.cos(angle) - self.y * math.sin(angle)
+        self.y = self.x * math.sin(angle) + self.y * math.cos(angle)
+
+def to_vector(point):
+    return vector(point[0], point[1])
