@@ -5,22 +5,22 @@ import sys
 import random
 import math
 from Sakuya.math import get_angle, to_units
-from Sakuya.vector import vector
+from Sakuya.vector import *
 
-WINDOW_SIZE = vector(480, 640)
+WINDOW_SIZE = Vector(480, 640)
 TICKS_PER_SEC = 16
 
 pygame.init()
 screen = pygame.display.set_mode((WINDOW_SIZE.x, WINDOW_SIZE.y))
 pygame.display.set_caption("Endless Sim (PRE-ALPHA)")
 clock = pygame.time.Clock()
-sak_time = Sakuya.time()
+sak_time = Sakuya.Time()
 delta_time = 0
 ticks_past = 0
 
 # MAIN WORLD SETUP
-world = Sakuya.world()
-world.gravity = vector(0, 0)
+world = Sakuya.World()
+world.gravity = Vector(0, 0)
 
 def spread_attack(mid, min, max, speed: float, projectile_count: int, repeat: int, delay_per_bullet: int, delay_per_shot, rng_range: float):
     projectiles = []
@@ -31,14 +31,14 @@ def spread_attack(mid, min, max, speed: float, projectile_count: int, repeat: in
     return {"projectiles": projectiles, "speed": speed, "repeat": repeat, "dpb": delay_per_bullet, "dps": delay_per_shot, "rng_range": rng_range}
 
 # ENTITIES
-CHUNAMI = Sakuya.entity(
-    vector(to_units(WINDOW_SIZE.x/2), 10),
+CHUNAMI = Sakuya.Entity(
+    Vector(to_units(WINDOW_SIZE.x/2), 10),
     Sakuya.unit(5),
     pygame.Surface([10, 10])
 )
 
-PROJECTILE = Sakuya.entity(
-    vector(0, 0),
+PROJECTILE = Sakuya.Entity(
+    Vector(0, 0),
     Sakuya.unit(1),
     pygame.Surface([2, 2])
 )
@@ -47,7 +47,7 @@ CHUNAMI.ATTACKS = [
     spread_attack(90, -50, 50, 10, 20, 1, 50, 500, 0.008)
 ]
 
-def attack(entity: Sakuya.entity, atk_id):
+def attack(entity: Sakuya.Entity, atk_id):
     atk_list = CHUNAMI.ATTACKS[atk_id]
     bullet_time_offset = 0
     for atk in atk_list["projectiles"]:
@@ -55,9 +55,9 @@ def attack(entity: Sakuya.entity, atk_id):
             p = entity.shoot(o, p, a, s)
             world.objects.append(p)
 
-        t = Sakuya.event(
+        t = Sakuya.Event(
             bullet_time_offset, time_stuff, 
-            [vector(0, 0), PROJECTILE, math.radians(atk) + random.uniform(-atk_list["rng_range"], atk_list["rng_range"]), atk_list["speed"]]
+            [Vector(0, 0), PROJECTILE, math.radians(atk) + random.uniform(-atk_list["rng_range"], atk_list["rng_range"]), atk_list["speed"]]
         )
         sak_time.wait(t)
         bullet_time_offset += atk_list["dpb"]
@@ -66,7 +66,7 @@ world.objects.append(CHUNAMI)
 
 if __name__ == "__main__":
     while(True):
-        mouse_pos = vector(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+        mouse_pos = Vector(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()

@@ -3,8 +3,8 @@ from Sakuya.vector import *
 from Sakuya.math import *
 from Sakuya.config import *
 
-class object:
-    def __init__(self, position: vector, hitbox_radius: unit, has_rigidbody: bool = True, has_box_collider: bool = True):
+class Object:
+    def __init__(self, position: Vector, hitbox_radius: unit, has_rigidbody: bool = True, has_box_collider: bool = True):
         """
         :param vector(unit, unit) position
         :param unit hitbox_radius
@@ -16,8 +16,8 @@ class object:
         self.hitbox_radius = hitbox_radius
 
         self.position = position
-        self.velocity = vector(0, 0)
-        self.acceleration = vector(0, 0)
+        self.velocity = Vector(0, 0)
+        self.acceleration = Vector(0, 0)
         self._gravity = None
 
         self._on_destroy_val = 0

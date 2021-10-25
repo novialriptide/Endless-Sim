@@ -12,7 +12,7 @@ def to_pixels(val: unit):
 def to_units(val: pixel):
     return val / PIXELS_PER_UNIT
 
-def get_angle(origin: vector, direction: vector) -> float:
+def get_angle(origin: Vector, direction: Vector) -> float:
     """
     Returns an angle in radians of the object to look at from the origin point
     """
