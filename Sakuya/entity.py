@@ -21,7 +21,7 @@ class entity(object):
         """
         return pygame.transform.scale(self._surface, [to_pixels(self._surface.get_width()), to_pixels(self._surface.get_height())])
     
-    def shoot(self, projectile, angle: float, speed: unit):
+    def shoot(self, offset: vector, projectile, angle: float, speed: unit):
         """
         :param entity projectile
         :param float angle (radian)
