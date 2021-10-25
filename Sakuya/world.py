@@ -10,9 +10,6 @@ class World:
         self.gravity = Vector(0, 10)
         self.current_tick = 1
 
-        #pixels per unit
-        self.ppu = 10
-
     def advance_frame(self, delta_time: float):
         """
         Updates the entities inside the world, such as physics & animation

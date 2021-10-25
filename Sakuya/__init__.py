@@ -5,6 +5,7 @@ from .entity import *
 from .math import *
 from .object import *
 from .particles import *
+from .text import *
 from .tilemap import *
 from .time import *
 from .vector import *
