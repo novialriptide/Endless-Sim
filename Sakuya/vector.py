@@ -25,11 +25,6 @@ class vector:
 
     def to_list(self):
         return [self.x, self.y]
-        
-    def rotate(self, angle):
-        angle = math.radians(angle)
-        self.x = self.x * math.cos(angle) - self.y * math.sin(angle)
-        self.y = self.x * math.sin(angle) + self.y * math.cos(angle)
 
 def to_vector(point):
     return vector(point[0], point[1])

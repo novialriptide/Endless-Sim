@@ -19,16 +19,16 @@ class entity(object):
         """
         Returns a surface with the width and height in units
         """
-        return pygame.transform.scale(self._surface, [self._surface.get_width(), self._surface.get_height()])
+        return pygame.transform.scale(self._surface, [to_pixels(self._surface.get_width()), to_pixels(self._surface.get_height())])
     
-    def shoot(self, projectile, angle: float, speed: float):
+    def shoot(self, projectile, angle: float, speed: unit):
         """
         :param entity projectile
-        :param vector direction
+        :param float angle (radian)
+        :param unit speed
         """
         projectile = copy.copy(projectile)
-        projectile.velocity = vector(0, speed)
-        projectile.velocity.rotate(angle)
+        projectile.velocity = vector(speed * math.cos(angle), speed * math.sin(angle))
         projectile.position = self.position
         return projectile
 

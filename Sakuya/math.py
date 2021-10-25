@@ -14,7 +14,7 @@ def to_units(val: pixel):
 
 def get_angle(origin: vector, direction: vector) -> float:
     """
-    Returns an angle in degrees of the object to look at from the origin point
+    Returns an angle in radians of the object to look at from the origin point
     """
     distance = direction - origin
-    return math.degrees(math.atan2(distance.y, distance.x))
+    return math.atan2(distance.y, distance.x)
