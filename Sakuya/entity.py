@@ -1,13 +1,12 @@
 import pygame
 import copy
-from Sakuya.vector import *
 from Sakuya.object import *
 from Sakuya.math import *
 from Sakuya.config import *
 
 class Entity(Object):
-    def __init__(self, position: Vector, hitbox_radius: int, surface: pygame.Surface, has_rigidbody = True, has_box_collider = True):
-        super().__init__(position, hitbox_radius, has_rigidbody=has_rigidbody, has_box_collider=has_box_collider)
+    def __init__(self, position: Vector, hitbox_radius: int, surface: pygame.Surface, name = None, has_rigidbody = True, has_box_collider = True):
+        super().__init__(position, hitbox_radius, name=name, has_rigidbody=has_rigidbody, has_box_collider=has_box_collider)
         self.current_frame = 0
         self.current_animation = 0
         self.animations = []
@@ -29,7 +28,7 @@ class Entity(Object):
         """
         projectile = copy.copy(projectile)
         projectile.velocity = Vector(speed * math.cos(angle), speed * math.sin(angle))
-        projectile.position = self.position
+        projectile.position = self.position + offset
         return projectile
 
     def update(self, delta_time: float):
