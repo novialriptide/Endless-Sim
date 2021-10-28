@@ -11,7 +11,7 @@ WINDOW_SIZE = Vector(480, 640)
 TICKS_PER_SEC = 16
 BUTTONS = {"up": pygame.K_UP, "left": pygame.K_LEFT, "down": pygame.K_DOWN, "right": pygame.K_RIGHT, "shoot": pygame.K_z}
 MAX_PROJECTILES = 1000
-BOSSBAR_UPDATE_SPEED = to_pixels(5)
+BOSSBAR_UPDATE_SPEED = to_pixels(0.2)
 PLAYER_SHOOTING_COOLDOWN = 100
 
 pygame.init()
@@ -67,7 +67,7 @@ is_moving_down = False
 is_moving_up = False
 is_shooting = False
 can_shoot = True
-player_damage = 1
+player_damage = 20
 
 # Projectile Setup
 CHUNAMI_PROJECTILE = Sakuya.Entity(
@@ -90,7 +90,7 @@ CHUNAMI = Sakuya.Entity(
     Sakuya.Unit(5),
     pygame.Surface([10, 10])
 )
-CHUNAMI.MAX_HEALTH = 3000
+CHUNAMI.MAX_HEALTH = 1000
 CHUNAMI.current_health = CHUNAMI.MAX_HEALTH
 
 chunami_moveset1 = Sakuya.Replay()
@@ -192,7 +192,7 @@ def game_scene():
         if c.name == "PLAYER PROJECTILE":
             if CHUNAMI.current_health >= 0:
                 CHUNAMI.current_health -= player_damage
-                world.objects.remove(c)
+            world.objects.remove(c)
     
     # Draws background
     screen.fill((0,0,0))
