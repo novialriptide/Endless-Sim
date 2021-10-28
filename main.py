@@ -9,7 +9,14 @@ from Sakuya.math import *
 
 WINDOW_SIZE = Vector(480, 640)
 TICKS_PER_SEC = 16
-BUTTONS = {"up": pygame.K_UP, "left": pygame.K_LEFT, "down": pygame.K_DOWN, "right": pygame.K_RIGHT, "shoot": pygame.K_z}
+BUTTONS = {
+    "up": pygame.K_UP, 
+    "left": pygame.K_LEFT, 
+    "down": pygame.K_DOWN, 
+    "right": pygame.K_RIGHT, 
+    "shoot": pygame.K_z,
+    "ability1": pygame.K_x
+}
 MAX_PROJECTILES = 1000
 BOSSBAR_UPDATE_SPEED = to_pixels(0.2)
 PLAYER_SHOOTING_COOLDOWN = 100
@@ -21,7 +28,6 @@ pygame.display.set_caption("Endless Sim (PRE-ALPHA)")
 clock = pygame.time.Clock()
 sak_time = Sakuya.Time()
 delta_time = 0
-ticks_past = 0
 current_scene = None
 mouse_pos = Vector(0, 0)
 angle_attack = 0
@@ -124,6 +130,13 @@ def attack(shooter: Sakuya.Entity, atk_id, start_angle: float):
 
 world.objects.append(PLAYER)
 world.objects.append(CHUNAMI)
+
+def developer_record():
+
+    for event in pygame.event.get():
+        if event.key == pygame.K_1:
+            pass
+        if event.key == pygame.K_2
 
 def game_scene():
     global is_moving_up

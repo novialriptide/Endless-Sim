@@ -1,4 +1,5 @@
 import json
+import pygame
 
 class Frame:
     def __init__(self, tick: int, methods=[]):
@@ -20,6 +21,11 @@ class Replay:
     def __init__(self):
         self.frames = []
         self.methods = []
+        self._is_recording = True
+
+    @property
+    def is_recording(self):
+        return self._is_recording
 
     def search_frame(self, tick):
         for f in self.frames:

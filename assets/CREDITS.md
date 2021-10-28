@@ -18,7 +18,7 @@
  - novial
 
 ## Graphic Artists
- - novrain 
+ - novial
 
 ## Music Artists
  - Fludix9
