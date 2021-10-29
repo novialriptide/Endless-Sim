@@ -6,6 +6,7 @@ import sys
 import random
 import math
 from Sakuya.math import *
+from Sakuya.replay import Frame
 
 WINDOW_SIZE = Vector(480, 640)
 TICKS_PER_SEC = 16
@@ -132,11 +133,18 @@ world.objects.append(PLAYER)
 world.objects.append(CHUNAMI)
 
 def developer_record():
-
+    f = Frame(world.ticks_elapsed)
     for event in pygame.event.get():
+        if event.key == pygame.K_0:
+            f.methods.append(0)
         if event.key == pygame.K_1:
-            pass
-        if event.key == pygame.K_2
+            f.methods.append(1)
+        if event.key == pygame.K_2:
+            f.methods.append(2)
+        if event.key == pygame.K_3:
+            f.methods.append(3)
+        if event.key == pygame.K_4:
+            f.methods.append(4)
 
 def game_scene():
     global is_moving_up
