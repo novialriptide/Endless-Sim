@@ -2,6 +2,7 @@ from pygame import __version__ as pg_ver
 
 from .animation import *
 from .bossbar import *
+from .button import *
 from .entity import *
 from .math import *
 from .object import *

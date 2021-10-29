@@ -39,6 +39,7 @@ current_scene = None
 mouse_pos = Vector(0, 0)
 angle_attack = 0
 current_replay = None
+game_state = "Main" # Main, Game, Pause, Dead
 
 # Main world setup
 world = Sakuya.World()
@@ -164,35 +165,61 @@ def input():
         if event.type == pygame.QUIT:
             sys.exit()
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_0:
-                chu_move0()
-            if event.key == pygame.K_1:
-                attack(CHUNAMI, 0, 0)
-            if event.key == pygame.K_2:
-                attack(CHUNAMI, 1, 0)
-            if event.key == pygame.K_3:
-                attack(CHUNAMI, 2, 0)
-            if event.key == BUTTONS["up"]:
+            if event.key == BUTTONS["up"] and game_state == "Game":
                 is_moving_up = True
-            if event.key == BUTTONS["down"]:
+            if event.key == BUTTONS["down"] and game_state == "Game":
                 is_moving_down = True
-            if event.key == BUTTONS["left"]:
+            if event.key == BUTTONS["left"] and game_state == "Game":
                 is_moving_left = True
-            if event.key == BUTTONS["right"]:
+            if event.key == BUTTONS["right"] and game_state == "Game":
                 is_moving_right = True
-            if event.key == BUTTONS["shoot"]:
+            if event.key == BUTTONS["shoot"] and game_state == "Game":
                 is_shooting = True
         if event.type == pygame.KEYUP:
-            if event.key == BUTTONS["up"]:
+            if event.key == BUTTONS["up"] and game_state == "Game":
                 is_moving_up = False
-            if event.key == BUTTONS["down"]:
+            if event.key == BUTTONS["down"] and game_state == "Game":
                 is_moving_down = False
-            if event.key == BUTTONS["left"]:
+            if event.key == BUTTONS["left"] and game_state == "Game":
                 is_moving_left = False
-            if event.key == BUTTONS["right"]:
+            if event.key == BUTTONS["right"] and game_state == "Game":
                 is_moving_right = False
-            if event.key == BUTTONS["shoot"]:
+            if event.key == BUTTONS["shoot"] and game_state == "Game":
                 is_shooting = False
+
+def main_menu():
+    global delta_time
+    global current_scene
+    global game_state
+
+    game_state = "Main"
+    buttons = []
+    mouse_pos = to_vector(pygame.mouse.get_pos())
+    input()
+
+    # Draws background
+    screen.fill((0,0,0))
+
+    # Buttons
+    ## Play Button
+    def play_button_f():
+        global current_scene
+        current_scene = game_scene
+    play_text = Sakuya.text("Play", to_pixels(4), "Arial", (0,0,0))
+    play_rect = play_text.get_rect()
+    play_rect.x = WINDOW_SIZE.x/2 - 200
+    play_rect.y = WINDOW_SIZE.y/2 - play_rect.height/2
+    play_button = Sakuya.Button(play_rect, [play_button_f])
+    pygame.draw.rect(screen, (255,0,0), play_button.rect)
+    screen.blit(play_text, (play_button.rect.x, play_button.rect.y))
+    buttons.append(play_button)
+
+    # Update values
+    world.advance_frame(delta_time)
+    sak_time.update()
+    pygame.display.update()
+    for b in buttons: b.update()
+    delta_time = 1 / clock.tick(60)
 
 def game_scene():
     global is_moving_up
@@ -206,7 +233,9 @@ def game_scene():
     global angle_attack
     global shooting_cooldown
     global can_shoot
+    global game_state
     
+    game_state = "Game"
     mouse_pos = to_vector(pygame.mouse.get_pos())
     angle_attack = math.degrees(get_angle(PLAYER.position, CHUNAMI.position))
     input()
@@ -278,6 +307,9 @@ def game_scene():
     delta_time = 1 / clock.tick(60)
 
 def dead_scene():
+    global game_state
+
+    game_state = "Dead"
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
@@ -302,7 +334,7 @@ def dead_scene():
     sak_time.update()
     delta_time = 1 / clock.tick(60)
 
-current_scene = game_scene
+current_scene = main_menu
 if __name__ == "__main__":
     while(True):
         current_scene()
