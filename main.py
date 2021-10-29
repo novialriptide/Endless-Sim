@@ -1,5 +1,6 @@
 from numpy.lib.function_base import angle
 from pygame import mouse
+from pygame.display import update
 import Sakuya
 import pygame
 import sys
@@ -22,6 +23,11 @@ MAX_PROJECTILES = 1000
 BOSSBAR_UPDATE_SPEED = to_pixels(0.2)
 PLAYER_SHOOTING_COOLDOWN = 100
 
+# Chunami Moveset 1
+CMS1_UPDATE_EVERY_TICK = 8
+CMS1_ATTACKS = [0, 1, 2, 3]
+CMS1_MAX_ATTACKS = 2
+
 pygame.init()
 pg_flags = pygame.SCALED
 screen = pygame.display.set_mode(size=(WINDOW_SIZE.x, WINDOW_SIZE.y), flags = pg_flags)
@@ -32,6 +38,7 @@ delta_time = 0
 current_scene = None
 mouse_pos = Vector(0, 0)
 angle_attack = 0
+current_replay = None
 
 # Main world setup
 world = Sakuya.World()
@@ -60,6 +67,21 @@ def target_attack(speed: float, projectile_count: int, delay_per_bullet: int, rn
         projectiles.append(mid + angle_attack)
     
     return {"projectiles": projectiles, "speed": speed, "dpb": delay_per_bullet, "rng_range": rng_range, "damage": damage}
+
+def attack(shooter: Sakuya.Entity, projectile_data, start_angle: float):
+    bullet_time_offset = 0
+    for atk in projectile_data["projectiles"]:
+        def time_stuff(o, p, a, s):
+            p = shooter.shoot(o, p, a+start_angle, s)
+            p.on_destroy(3000)
+            world.objects.append(p)
+
+        t = Sakuya.Event(
+            bullet_time_offset, time_stuff, 
+            [Vector(0, 0), CHUNAMI_PROJECTILE, math.radians(atk) + random.uniform(-projectile_data["rng_range"], projectile_data["rng_range"]), projectile_data["speed"]]
+        )
+        sak_time.wait(t)
+        bullet_time_offset += projectile_data["dpb"]
 
 # Player Setup
 PLAYER = Sakuya.Entity(
@@ -98,6 +120,7 @@ CHUNAMI = Sakuya.Entity(
     pygame.Surface([10, 10])
 )
 CHUNAMI.MAX_HEALTH = 1000
+CHUNAMI.speed = 0.3
 CHUNAMI.current_health = CHUNAMI.MAX_HEALTH
 
 chunami_moveset1 = Sakuya.Replay()
@@ -105,66 +128,44 @@ chunami_moveset2 = Sakuya.Replay()
 chunami_moveset3 = Sakuya.Replay()
 chunami_bossbar = Sakuya.BossBar(CHUNAMI.MAX_HEALTH, BOSSBAR_UPDATE_SPEED)
 
-def chu_atk1(): return target_attack(10, 5, 50, 0, 10, 180)
-def chu_atk2(): return spread_attack(10, 15, 50, 0.008, 10, 90, -50, 50)
-def chu_atk3(): return spiral_attack(10, 15, 0, 0, 10)
+def chu_move0():
+    CHUNAMI.target_position = Vector(random.randint(5, to_units(WINDOW_SIZE.x)-5), random.randint(5, int(to_units(WINDOW_SIZE.y * (1/3)))-5))
+def chu_atk1(): attack(CHUNAMI, target_attack(10, 5, 50, 0, 10, 180), 0)
+def chu_atk2(): attack(CHUNAMI, spread_attack(10, 15, 50, 0.008, 10, 90, -50, 50), 0)
+def chu_atk3(): attack(CHUNAMI, spiral_attack(10, 15, 0, 0, 10), 0)
 
-CHUNAMI.ATTACKS = [chu_atk1, chu_atk2, chu_atk3]
+CHUNAMI.ATTACKS = [chu_move0, chu_atk1, chu_atk2, chu_atk3]
 for m in CHUNAMI.ATTACKS:
     chunami_moveset1.methods.append(m)
 
-def attack(shooter: Sakuya.Entity, atk_id, start_angle: float):
-    atk_list = CHUNAMI.ATTACKS[atk_id]()
-    bullet_time_offset = 0
-    for atk in atk_list["projectiles"]:
-        def time_stuff(o, p, a, s):
-            p = shooter.shoot(o, p, a+start_angle, s)
-            p.on_destroy(3000)
-            world.objects.append(p)
-
-        t = Sakuya.Event(
-            bullet_time_offset, time_stuff, 
-            [Vector(0, 0), CHUNAMI_PROJECTILE, math.radians(atk) + random.uniform(-atk_list["rng_range"], atk_list["rng_range"]), atk_list["speed"]]
-        )
-        sak_time.wait(t)
-        bullet_time_offset += atk_list["dpb"]
+executed_ticks = []
+def chunami_ai(update_tick, valid_attacks, max_attacks):
+    global has_executed_tick
+    if world.ticks_elapsed % update_tick == 0 and world.ticks_elapsed not in executed_ticks:
+        for i in range(max_attacks):
+            atk_id = valid_attacks[random.randint(0, len(valid_attacks)-1)]
+            CHUNAMI.ATTACKS[atk_id]()
+            executed_ticks.append(world.ticks_elapsed)
 
 world.objects.append(PLAYER)
 world.objects.append(CHUNAMI)
 
-def developer_record():
-    f = Frame(world.ticks_elapsed)
-    for event in pygame.event.get():
-        if event.key == pygame.K_0:
-            f.methods.append(0)
-        if event.key == pygame.K_1:
-            f.methods.append(1)
-        if event.key == pygame.K_2:
-            f.methods.append(2)
-        if event.key == pygame.K_3:
-            f.methods.append(3)
-        if event.key == pygame.K_4:
-            f.methods.append(4)
+current_replay = chunami_moveset1
+current_replay.load("chu_moveset1.json")
 
-def game_scene():
+def input():
     global is_moving_up
     global is_moving_down
     global is_moving_left
     global is_moving_right
     global is_shooting
-    global delta_time
-    global current_scene
-    global mouse_pos
-    global angle_attack
-    global shooting_cooldown
-    global can_shoot
-
-    mouse_pos = to_vector(pygame.mouse.get_pos())
-    angle_attack = math.degrees(get_angle(PLAYER.position, CHUNAMI.position))
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_0:
+                chu_move0()
             if event.key == pygame.K_1:
                 attack(CHUNAMI, 0, 0)
             if event.key == pygame.K_2:
@@ -192,6 +193,23 @@ def game_scene():
                 is_moving_right = False
             if event.key == BUTTONS["shoot"]:
                 is_shooting = False
+
+def game_scene():
+    global is_moving_up
+    global is_moving_down
+    global is_moving_left
+    global is_moving_right
+    global is_shooting
+    global delta_time
+    global current_scene
+    global mouse_pos
+    global angle_attack
+    global shooting_cooldown
+    global can_shoot
+    
+    mouse_pos = to_vector(pygame.mouse.get_pos())
+    angle_attack = math.degrees(get_angle(PLAYER.position, CHUNAMI.position))
+    input()
 
     # Adds player movement
     movement = Vector(0, 0)
@@ -239,8 +257,10 @@ def game_scene():
     pixel_offset = to_pixels(2)
     fps = Sakuya.text(f"fps: {int(clock.get_fps())}", 20, "Arial", (0, 255, 0))
     objects_loaded = Sakuya.text(f"loaded objects: {len(world.objects)}", 20, "Arial", (0, 255, 0))
+    ticks_debug = Sakuya.text(f"tick: {world.ticks_elapsed}", 20, "Arial", (0, 255, 0))
     screen.blit(fps, (0,pixel_offset))
     screen.blit(objects_loaded, (0,20 + pixel_offset))
+    screen.blit(ticks_debug, (0,40 + pixel_offset))
     
     # Chunami's Boss Bar
     chunami_bossbar.current_health = CHUNAMI.current_health
@@ -249,10 +269,12 @@ def game_scene():
     pygame.draw.rect(screen, (0,255,0), pygame.Rect(0,0,to_pixels(bossbar_percentage * 30), to_pixels(2)))
     
     # Update values
-    pygame.display.update()
     world.advance_frame(delta_time)
     sak_time.update()
     chunami_bossbar.update()
+    chunami_ai(CMS1_UPDATE_EVERY_TICK, CMS1_ATTACKS, CMS1_MAX_ATTACKS)
+    # current_replay.update(world.ticks_elapsed)
+    pygame.display.update()
     delta_time = 1 / clock.tick(60)
 
 def dead_scene():
@@ -270,8 +292,10 @@ def dead_scene():
     # Draws debug values
     fps = Sakuya.text(f"fps: {int(clock.get_fps())}", 20, "Arial", (0, 255, 0))
     objects_loaded = Sakuya.text(f"loaded objects: {len(world.objects)}", 20, "Arial", (0, 255, 0))
+    ticks_debug = Sakuya.text(f"tick: {world.ticks_elapsed}", 20, "Arial", (0, 255, 0))
     screen.blit(fps, (0,0))
     screen.blit(objects_loaded, (0,20))
+    screen.blit(ticks_debug, (0,40))
 
     # loop
     pygame.display.update()

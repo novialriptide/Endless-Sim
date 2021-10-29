@@ -1,0 +1,64 @@
+{
+    "frames": [
+        {
+            "methods": [1, 3],
+            "tick": 40
+        },
+        {
+            "methods": [1, 2],
+            "tick": 60
+        },
+        {
+            "methods": [0, 1, 2],
+            "tick": 68
+        },
+        {
+            "methods": [1, 2],
+            "tick": 76
+        },
+        {
+            "methods": [1, 2],
+            "tick": 84
+        },
+        {
+            "methods": [2, 3],
+            "tick": 92
+        },
+        {
+            "methods": [1, 3],
+            "tick": 103
+        },
+        {
+            "methods": [2],
+            "tick": 110
+        },
+        {
+            "methods": [0, 1, 2, 3],
+            "tick": 130
+        },
+        {
+            "methods": [2],
+            "tick": 138
+        },
+        {
+            "methods": [2],
+            "tick": 146
+        },
+        {
+            "methods": [2],
+            "tick": 154
+        },
+        {
+            "methods": [0, 2],
+            "tick": 162
+        },
+        {
+            "methods": [2],
+            "tick": 170
+        },
+        {
+            "methods": [1, 2, 3],
+            "tick": 178
+        }
+    ]
+}

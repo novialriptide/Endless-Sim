@@ -12,6 +12,8 @@ class Entity(Object):
         self.animations = []
         self.surface_offset = Vector(0, 0)
         self._surface = surface
+        self.speed = 0
+        self.target_position = self.position
 
     @property
     def surface(self):
@@ -33,4 +35,5 @@ class Entity(Object):
 
     def update(self, delta_time: float):
         super().update(delta_time)
+        self.position = self.position.move_toward(self.target_position, self.speed)
         self.current_frame += 1

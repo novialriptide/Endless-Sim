@@ -22,6 +22,7 @@ class Replay:
         self.frames = []
         self.methods = []
         self._is_recording = True
+        self._executed_ticks = []
 
     @property
     def is_recording(self):
@@ -40,6 +41,16 @@ class Replay:
         with open(f"{path}.json", 'w') as outfile:
             json.dump(data, outfile, indent=4)
 
+    def load(self, path):
+        self.frames = []
+        data = json.load(open(path))
+        for f in data["frames"]:
+            self.frames.append(Frame(f["tick"], f["methods"]))
+
     def update(self, current_tick):
-        f = self.search_frame(current_tick)
-        for m in f.methods: m()
+        if current_tick not in self._executed_ticks:
+            f = self.search_frame(current_tick)
+            if f != None:
+                for m in f.methods:
+                    self.methods[m]()
+                self._executed_ticks.append(current_tick)
