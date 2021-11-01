@@ -13,7 +13,17 @@ class Entity(Object):
         self.surface_offset = Vector(0, 0)
         self._surface = surface
         self.speed = 0
-        self.target_position = self.position
+        self._target_position = self.position
+        self._enable_target_positon = False
+
+    @property
+    def target_position(self):
+        return self._target_position
+
+    @target_position.setter
+    def target_position(self, value):
+        self._target_position = value
+        self._enable_target_positon = True
 
     @property
     def surface(self):
@@ -35,5 +45,7 @@ class Entity(Object):
 
     def update(self, delta_time: float):
         super().update(delta_time)
-        self.position = self.position.move_toward(self.target_position, self.speed)
+        if self._enable_target_positon:
+            self.position = self.position.move_toward(self._target_position, self.speed)
+            if self.position == self._target_position: self._enable_target_positon = False
         self.current_frame += 1

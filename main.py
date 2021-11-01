@@ -6,6 +6,7 @@ import pygame
 import sys
 import random
 import math
+import copy
 from Sakuya.math import *
 from Sakuya.replay import Frame
 
@@ -28,6 +29,10 @@ CMS1_UPDATE_EVERY_TICK = 8
 CMS1_ATTACKS = [0, 1, 2, 3]
 CMS1_MAX_ATTACKS = 2
 
+DR_UPDATE_EVERY_TICK = 14
+DR_ATTACKS = [0]
+DR_MAX_ATTACKS = 1
+
 pygame.init()
 pg_flags = pygame.SCALED
 screen = pygame.display.set_mode(size=(WINDOW_SIZE.x, WINDOW_SIZE.y), flags = pg_flags)
@@ -38,8 +43,9 @@ delta_time = 0
 current_scene = None
 mouse_pos = Vector(0, 0)
 angle_attack = 0
-current_replay = None
 game_state = "Main" # Main, Game, Pause, Dead
+
+enable_drone_spawns = True
 
 # Main world setup
 world = Sakuya.World()
@@ -88,7 +94,8 @@ def attack(shooter: Sakuya.Entity, projectile_data, start_angle: float):
 PLAYER = Sakuya.Entity(
     Vector(to_units(WINDOW_SIZE.x/2), 40),
     Sakuya.Unit(0.5),
-    pygame.Surface([10, 10])
+    pygame.Surface([10, 10]),
+    name = "PLAYER"
 )
 PLAYER.speed = 0.03
 is_moving_left = False
@@ -118,15 +125,13 @@ PLAYER_PROJECTILE = Sakuya.Entity(
 CHUNAMI = Sakuya.Entity(
     Vector(to_units(WINDOW_SIZE.x/2), 10),
     Sakuya.Unit(5),
-    pygame.Surface([10, 10])
+    pygame.Surface([10, 10]),
+    name = "CHUNAMI"
 )
 CHUNAMI.MAX_HEALTH = 1000
 CHUNAMI.speed = 0.3
 CHUNAMI.current_health = CHUNAMI.MAX_HEALTH
 
-chunami_moveset1 = Sakuya.Replay()
-chunami_moveset2 = Sakuya.Replay()
-chunami_moveset3 = Sakuya.Replay()
 chunami_bossbar = Sakuya.BossBar(CHUNAMI.MAX_HEALTH, BOSSBAR_UPDATE_SPEED)
 
 def chu_move0():
@@ -136,23 +141,47 @@ def chu_atk2(): attack(CHUNAMI, spread_attack(10, 15, 50, 0.008, 10, 90, -50, 50
 def chu_atk3(): attack(CHUNAMI, spiral_attack(10, 15, 0, 0, 10), 0)
 
 CHUNAMI.ATTACKS = [chu_move0, chu_atk1, chu_atk2, chu_atk3]
-for m in CHUNAMI.ATTACKS:
-    chunami_moveset1.methods.append(m)
+
+DRONE = Sakuya.Entity(
+    Vector(0, 0),
+    Sakuya.Unit(2),
+    pygame.Surface([10, 10]),
+    name="DRONE"
+)
+DRONE.MAX_HEALTH = 100
+DRONE.speed = 0.1
+DRONE.current_health = DRONE.MAX_HEALTH
+
+def dr_atk1(): attack(DRONE, target_attack(10, 5, 50, 0, 10, 180), 0) #must make this work with various objects
+DRONE.ATTACKS = [dr_atk1]
+DRONE_SPAWNPOINTS = [Vector(15, 30), Vector(to_units(WINDOW_SIZE.x)-15, 30)]
+
+def dr_sp1():
+    t = 0
+    t_delay = 5000
+    max_drones = 30
+
+    for d in range(max_drones):
+        def add_drone(pos):
+            dr = copy.copy(DRONE)
+            current_point = pos % 2
+            dr.position = DRONE_SPAWNPOINTS[current_point] + Vector(random.randrange(-3, 3), random.randrange(-3, 3))
+            dr.target_position = dr.position
+            world.objects.append(dr)
+        sak_time.wait(Sakuya.Event(t + t_delay*d, add_drone, args=[d]))
 
 executed_ticks = []
-def chunami_ai(update_tick, valid_attacks, max_attacks):
+def ai(update_tick, valid_attacks, max_attacks, entity_name):
     global has_executed_tick
     if world.ticks_elapsed % update_tick == 0 and world.ticks_elapsed not in executed_ticks:
-        for i in range(max_attacks):
-            atk_id = valid_attacks[random.randint(0, len(valid_attacks)-1)]
-            CHUNAMI.ATTACKS[atk_id]()
-            executed_ticks.append(world.ticks_elapsed)
+        for o in world.find_objects_by_name(entity_name):
+            for i in range(max_attacks):
+                atk_id = valid_attacks[random.randint(0, len(valid_attacks)-1)]
+                o.ATTACKS[atk_id]()
+                executed_ticks.append(world.ticks_elapsed)
 
 world.objects.append(PLAYER)
-world.objects.append(CHUNAMI)
-
-current_replay = chunami_moveset1
-current_replay.load("chu_moveset1.json")
+#world.objects.append(CHUNAMI)
 
 def input():
     global is_moving_up
@@ -204,6 +233,7 @@ def main_menu():
     ## Play Button
     def play_button_f():
         global current_scene
+        dr_sp1()
         current_scene = game_scene
     play_text = Sakuya.text("Play", to_pixels(4), "Arial", (0,0,0))
     play_rect = play_text.get_rect()
@@ -255,13 +285,15 @@ def game_scene():
             current_scene = dead_scene
             world.objects.remove(c)
     
+    """
     collided = world.test_collisions(CHUNAMI)
     for c in collided:
         if c.name == "PLAYER PROJECTILE":
             if CHUNAMI.current_health >= 0:
                 CHUNAMI.current_health -= player_damage
             world.objects.remove(c)
-    
+    """
+
     # Draws background
     screen.fill((0,0,0))
 
@@ -301,7 +333,8 @@ def game_scene():
     world.advance_frame(delta_time)
     sak_time.update()
     chunami_bossbar.update()
-    chunami_ai(CMS1_UPDATE_EVERY_TICK, CMS1_ATTACKS, CMS1_MAX_ATTACKS)
+    # ai(CMS1_UPDATE_EVERY_TICK, CMS1_ATTACKS, CMS1_MAX_ATTACKS, "CHUNAMI")
+    ai(DR_UPDATE_EVERY_TICK, DR_ATTACKS, DR_MAX_ATTACKS, "DRONE")
     # current_replay.update(world.ticks_elapsed)
     pygame.display.update()
     delta_time = 1 / clock.tick(60)

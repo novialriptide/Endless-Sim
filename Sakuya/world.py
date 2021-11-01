@@ -21,6 +21,14 @@ class World:
 
         return collided
 
+    def find_objects_by_name(self, name):
+        objects = []
+        for o in self.objects:
+            if o.name == name:
+                objects.append(o)
+
+        return objects
+
     def advance_frame(self, delta_time: float):
         """
         Updates the entities inside the world, such as physics & animation
