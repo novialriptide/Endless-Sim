@@ -9,6 +9,7 @@ import math
 import copy
 from Sakuya.math import *
 from Sakuya.replay import Frame
+from assets import *
 
 WINDOW_SIZE = Vector(480, 640)
 TICKS_PER_SEC = 16
@@ -29,10 +30,6 @@ CMS1_UPDATE_EVERY_TICK = 8
 CMS1_ATTACKS = [0, 1, 2, 3]
 CMS1_MAX_ATTACKS = 2
 
-DR_UPDATE_EVERY_TICK = 14
-DR_ATTACKS = [0]
-DR_MAX_ATTACKS = 1
-
 pygame.init()
 pg_flags = pygame.SCALED
 screen = pygame.display.set_mode(size=(WINDOW_SIZE.x, WINDOW_SIZE.y), flags = pg_flags)
@@ -44,8 +41,6 @@ current_scene = None
 mouse_pos = Vector(0, 0)
 angle_attack = 0
 game_state = "Main" # Main, Game, Pause, Dead
-
-enable_drone_spawns = True
 
 # Main world setup
 world = Sakuya.World()
@@ -142,34 +137,6 @@ def chu_atk3(): attack(CHUNAMI, spiral_attack(10, 15, 0, 0, 10), 0)
 
 CHUNAMI.ATTACKS = [chu_move0, chu_atk1, chu_atk2, chu_atk3]
 
-DRONE = Sakuya.Entity(
-    Vector(0, 0),
-    Sakuya.Unit(2),
-    pygame.Surface([10, 10]),
-    name="DRONE"
-)
-DRONE.MAX_HEALTH = 100
-DRONE.speed = 0.1
-DRONE.current_health = DRONE.MAX_HEALTH
-
-def dr_atk1(): attack(DRONE, target_attack(10, 5, 50, 0, 10, 180), 0) #must make this work with various objects
-DRONE.ATTACKS = [dr_atk1]
-DRONE_SPAWNPOINTS = [Vector(15, 30), Vector(to_units(WINDOW_SIZE.x)-15, 30)]
-
-def dr_sp1():
-    t = 0
-    t_delay = 5000
-    max_drones = 30
-
-    for d in range(max_drones):
-        def add_drone(pos):
-            dr = copy.copy(DRONE)
-            current_point = pos % 2
-            dr.position = DRONE_SPAWNPOINTS[current_point] + Vector(random.randrange(-3, 3), random.randrange(-3, 3))
-            dr.target_position = dr.position
-            world.objects.append(dr)
-        sak_time.wait(Sakuya.Event(t + t_delay*d, add_drone, args=[d]))
-
 executed_ticks = []
 def ai(update_tick, valid_attacks, max_attacks, entity_name):
     global has_executed_tick
@@ -181,7 +148,7 @@ def ai(update_tick, valid_attacks, max_attacks, entity_name):
                 executed_ticks.append(world.ticks_elapsed)
 
 world.objects.append(PLAYER)
-#world.objects.append(CHUNAMI)
+world.objects.append(CHUNAMI)
 
 def input():
     global is_moving_up
@@ -223,17 +190,17 @@ def main_menu():
 
     game_state = "Main"
     buttons = []
-    mouse_pos = to_vector(pygame.mouse.get_pos())
     input()
 
     # Draws background
     screen.fill((0,0,0))
+    tLOGO1 = pygame.transform.scale(LOGO1, (LOGO1.get_width()*3, LOGO1.get_height()*3))
+    screen.blit(tLOGO1, (WINDOW_SIZE.x/2-tLOGO1.get_width()/2, WINDOW_SIZE.y*(1/4)-tLOGO1.get_height()/2))
 
     # Buttons
     ## Play Button
     def play_button_f():
         global current_scene
-        dr_sp1()
         current_scene = game_scene
     play_text = Sakuya.text("Play", to_pixels(4), "Arial", (0,0,0))
     play_rect = play_text.get_rect()
@@ -285,14 +252,12 @@ def game_scene():
             current_scene = dead_scene
             world.objects.remove(c)
     
-    """
     collided = world.test_collisions(CHUNAMI)
     for c in collided:
         if c.name == "PLAYER PROJECTILE":
             if CHUNAMI.current_health >= 0:
                 CHUNAMI.current_health -= player_damage
             world.objects.remove(c)
-    """
 
     # Draws background
     screen.fill((0,0,0))
@@ -333,9 +298,7 @@ def game_scene():
     world.advance_frame(delta_time)
     sak_time.update()
     chunami_bossbar.update()
-    # ai(CMS1_UPDATE_EVERY_TICK, CMS1_ATTACKS, CMS1_MAX_ATTACKS, "CHUNAMI")
-    ai(DR_UPDATE_EVERY_TICK, DR_ATTACKS, DR_MAX_ATTACKS, "DRONE")
-    # current_replay.update(world.ticks_elapsed)
+    ai(CMS1_UPDATE_EVERY_TICK, CMS1_ATTACKS, CMS1_MAX_ATTACKS, "CHUNAMI")
     pygame.display.update()
     delta_time = 1 / clock.tick(60)
 
