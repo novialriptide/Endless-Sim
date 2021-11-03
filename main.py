@@ -1,4 +1,3 @@
-from numpy.lib.function_base import angle
 from pygame import mouse
 from pygame.display import update
 import Sakuya
@@ -12,25 +11,22 @@ from Sakuya.replay import Frame
 from assets import *
 
 WINDOW_SIZE = Vector(480, 640)
-TICKS_PER_SEC = 16
 BUTTONS = {
     "up": pygame.K_UP, 
     "left": pygame.K_LEFT, 
     "down": pygame.K_DOWN, 
     "right": pygame.K_RIGHT, 
     "shoot": pygame.K_z,
-    "ability1": pygame.K_x
+    "use": pygame.K_x,
+    "select": pygame.K_a,
+    "start": pygame.K_s
 }
 MAX_PROJECTILES = 1000
 BOSSBAR_UPDATE_SPEED = to_pixels(0.2)
 PLAYER_SHOOTING_COOLDOWN = 100
 
-# Chunami Moveset 1
-CMS1_UPDATE_EVERY_TICK = 8
-CMS1_ATTACKS = [0, 1, 2, 3]
-CMS1_MAX_ATTACKS = 2
-
 pygame.init()
+Sakuya.init()
 pg_flags = pygame.SCALED
 screen = pygame.display.set_mode(size=(WINDOW_SIZE.x, WINDOW_SIZE.y), flags = pg_flags)
 pygame.display.set_caption("Endless Sim (PRE-ALPHA)")
@@ -75,7 +71,7 @@ def attack(shooter: Sakuya.Entity, projectile_data, start_angle: float):
     for atk in projectile_data["projectiles"]:
         def time_stuff(o, p, a, s):
             p = shooter.shoot(o, p, a+start_angle, s)
-            p.on_destroy(3000)
+            p.on_destroy(2000)
             world.objects.append(p)
 
         t = Sakuya.Event(
@@ -99,7 +95,7 @@ is_moving_down = False
 is_moving_up = False
 is_shooting = False
 can_shoot = True
-player_damage = 20
+player_damage = 10
 
 # Projectile Setup
 CHUNAMI_PROJECTILE = Sakuya.Entity(
@@ -124,28 +120,25 @@ CHUNAMI = Sakuya.Entity(
     name = "CHUNAMI"
 )
 CHUNAMI.MAX_HEALTH = 1000
-CHUNAMI.speed = 0.3
 CHUNAMI.current_health = CHUNAMI.MAX_HEALTH
-
+CHUNAMI.speed = 0.3
 chunami_bossbar = Sakuya.BossBar(CHUNAMI.MAX_HEALTH, BOSSBAR_UPDATE_SPEED)
 
 def chu_move0():
     CHUNAMI.target_position = Vector(random.randint(5, to_units(WINDOW_SIZE.x)-5), random.randint(5, int(to_units(WINDOW_SIZE.y * (1/3)))-5))
-def chu_atk1(): attack(CHUNAMI, target_attack(10, 5, 50, 0, 10, 180), 0)
-def chu_atk2(): attack(CHUNAMI, spread_attack(10, 15, 50, 0.008, 10, 90, -50, 50), 0)
-def chu_atk3(): attack(CHUNAMI, spiral_attack(10, 15, 0, 0, 10), 0)
 
-CHUNAMI.ATTACKS = [chu_move0, chu_atk1, chu_atk2, chu_atk3]
+def chu_atk1(): attack(CHUNAMI, target_attack(10, 3, 50, 0, 10, 180), 0)
+def chu_atk2(): attack(CHUNAMI, spread_attack(10, 10, 50, 0.008, 10, 90, -50, 50), 0)
+def chu_atk3(): attack(CHUNAMI, spiral_attack(10, 10, 0, 0, 10), 0)
 
-executed_ticks = []
-def ai(update_tick, valid_attacks, max_attacks, entity_name):
-    global has_executed_tick
-    if world.ticks_elapsed % update_tick == 0 and world.ticks_elapsed not in executed_ticks:
-        for o in world.find_objects_by_name(entity_name):
-            for i in range(max_attacks):
-                atk_id = valid_attacks[random.randint(0, len(valid_attacks)-1)]
-                o.ATTACKS[atk_id]()
-                executed_ticks.append(world.ticks_elapsed)
+chunami_ai = Sakuya.AI(
+    [
+        Sakuya.Decision(chu_move0, 0.001),
+        Sakuya.Decision(chu_atk1, 0.5),
+        Sakuya.Decision(chu_atk2, 0.3),
+        Sakuya.Decision(chu_atk3, 0.4)
+    ], 10, max_decisions=2
+)
 
 world.objects.append(PLAYER)
 world.objects.append(CHUNAMI)
@@ -204,9 +197,9 @@ def main_menu():
         current_scene = game_scene
     play_text = Sakuya.text("Play", to_pixels(4), "Arial", (0,0,0))
     play_rect = play_text.get_rect()
-    play_rect.x = WINDOW_SIZE.x/2 - 200
-    play_rect.y = WINDOW_SIZE.y/2 - play_rect.height/2
-    play_button = Sakuya.Button(play_rect, [play_button_f])
+    play_rect.x = WINDOW_SIZE.x/2 - play_rect.width/2
+    play_rect.y = WINDOW_SIZE.y * (3/5) - play_rect.height/2
+    play_button = Sakuya.Button(play_rect, [play_button_f], key=BUTTONS["start"])
     pygame.draw.rect(screen, (255,0,0), play_button.rect)
     screen.blit(play_text, (play_button.rect.x, play_button.rect.y))
     buttons.append(play_button)
@@ -288,17 +281,18 @@ def game_scene():
     screen.blit(objects_loaded, (0,20 + pixel_offset))
     screen.blit(ticks_debug, (0,40 + pixel_offset))
     
-    # Chunami's Boss Bar
+    # Chunami's Boss Bar & AI
     chunami_bossbar.current_health = CHUNAMI.current_health
     bossbar_percentage = chunami_bossbar.display_health / chunami_bossbar.max_health
     pygame.draw.rect(screen, (255,0,0), pygame.Rect(0,0,to_pixels(30), to_pixels(2)))
     pygame.draw.rect(screen, (0,255,0), pygame.Rect(0,0,to_pixels(bossbar_percentage * 30), to_pixels(2)))
     
+    chunami_ai.update_decisions(world.ticks_elapsed)
+
     # Update values
     world.advance_frame(delta_time)
     sak_time.update()
     chunami_bossbar.update()
-    ai(CMS1_UPDATE_EVERY_TICK, CMS1_ATTACKS, CMS1_MAX_ATTACKS, "CHUNAMI")
     pygame.display.update()
     delta_time = 1 / clock.tick(60)
 
