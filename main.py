@@ -7,6 +7,7 @@ import random
 import math
 import copy
 from Sakuya.math import *
+from Sakuya.object import Object
 from Sakuya.replay import Frame
 from assets import *
 
@@ -37,6 +38,7 @@ current_scene = None
 mouse_pos = Vector(0, 0)
 angle_attack = 0
 game_state = "Main" # Main, Game, Pause, Dead
+score = 0
 
 # Main world setup
 world = Sakuya.World()
@@ -70,9 +72,11 @@ def attack(shooter: Sakuya.Entity, projectile_data, start_angle: float):
     bullet_time_offset = 0
     for atk in projectile_data["projectiles"]:
         def time_stuff(o, p, a, s):
+            global score
             p = shooter.shoot(o, p, a+start_angle, s)
             p.on_destroy(2000)
             world.objects.append(p)
+            score += 10
 
         t = Sakuya.Event(
             bullet_time_offset, time_stuff, 
@@ -180,6 +184,7 @@ def main_menu():
     global delta_time
     global current_scene
     global game_state
+    global score
 
     game_state = "Main"
     buttons = []
@@ -224,6 +229,7 @@ def game_scene():
     global shooting_cooldown
     global can_shoot
     global game_state
+    global score
     
     game_state = "Game"
     mouse_pos = to_vector(pygame.mouse.get_pos())
@@ -239,18 +245,21 @@ def game_scene():
     PLAYER.position += movement
 
     # Test for collisions
-    collided = world.test_collisions(PLAYER)
-    for c in collided:
-        if c.name == "CHUNAMI PROJECTILE":
-            current_scene = dead_scene
-            world.objects.remove(c)
-    
-    collided = world.test_collisions(CHUNAMI)
-    for c in collided:
-        if c.name == "PLAYER PROJECTILE":
-            if CHUNAMI.current_health >= 0:
-                CHUNAMI.current_health -= player_damage
-            world.objects.remove(c)
+    try:
+        collided = world.test_collisions(PLAYER)
+        for c in collided:
+            if c.name == "CHUNAMI PROJECTILE":
+                current_scene = dead_scene
+                world.objects.remove(c)
+        
+        collided = world.test_collisions(CHUNAMI)
+        for c in collided:
+            if c.name == "PLAYER PROJECTILE":
+                if CHUNAMI.current_health >= 0:
+                    CHUNAMI.current_health -= player_damage
+                world.objects.remove(c)
+    except ObjectNotInWorld:
+        pass
 
     # Draws background
     screen.fill((0,0,0))
@@ -276,10 +285,10 @@ def game_scene():
     pixel_offset = to_pixels(2)
     fps = Sakuya.text(f"fps: {int(clock.get_fps())}", 20, "Arial", (0, 255, 0))
     objects_loaded = Sakuya.text(f"loaded objects: {len(world.objects)}", 20, "Arial", (0, 255, 0))
-    ticks_debug = Sakuya.text(f"tick: {world.ticks_elapsed}", 20, "Arial", (0, 255, 0))
+    score_text = Sakuya.text(f"score: {score}", 20, "Arial", (0, 255, 0))
     screen.blit(fps, (0,pixel_offset))
     screen.blit(objects_loaded, (0,20 + pixel_offset))
-    screen.blit(ticks_debug, (0,40 + pixel_offset))
+    screen.blit(score_text, (0,40 + pixel_offset))
     
     # Chunami's Boss Bar & AI
     chunami_bossbar.current_health = CHUNAMI.current_health
@@ -298,8 +307,10 @@ def game_scene():
 
 def dead_scene():
     global game_state
+    global score
 
     game_state = "Dead"
+    buttons = []
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
@@ -308,20 +319,54 @@ def dead_scene():
     screen.fill((0,0,0))
 
     # Draws game over message
-    game_over_text = Sakuya.text("gane oer", 20, "Arial", (0, 255, 0))
-    screen.blit(game_over_text, (WINDOW_SIZE.x/2,WINDOW_SIZE.y/2))
+    game_over_text = Sakuya.text("game over", 20, "Arial", (0, 255, 0))
+    screen.blit(game_over_text, (WINDOW_SIZE.x/2 - game_over_text.get_rect().width/2,WINDOW_SIZE.y * (1/3) - game_over_text.get_rect().height/2))
+
+    # Buttons
+    ## Try Again Button
+    def try_again_button_f():
+        global current_scene
+        global score
+        global is_moving_down
+        global is_moving_left
+        global is_moving_right
+        global is_moving_up
+        global is_shooting
+        global CHUNAMI
+
+        world.objects = []
+        is_moving_up = False
+        is_moving_down = False
+        is_moving_right = False
+        is_moving_left = False
+        is_shooting = False
+        CHUNAMI.current_health = CHUNAMI.MAX_HEALTH
+        world.objects.append(PLAYER)
+        world.objects.append(CHUNAMI)
+        current_scene = main_menu
+        score = 0
+
+    try_again_text = Sakuya.text("Try Again?", to_pixels(4), "Arial", (0,0,0))
+    try_again_rect = try_again_text.get_rect()
+    try_again_rect.x = WINDOW_SIZE.x/2 - try_again_rect.width/2
+    try_again_rect.y = WINDOW_SIZE.y * (3/5) - try_again_rect.height/2
+    try_again_button = Sakuya.Button(try_again_rect, [try_again_button_f], key=BUTTONS["start"])
+    pygame.draw.rect(screen, (255,0,0), try_again_button.rect)
+    screen.blit(try_again_text, (try_again_button.rect.x, try_again_button.rect.y))
+    buttons.append(try_again_button)
 
     # Draws debug values
     fps = Sakuya.text(f"fps: {int(clock.get_fps())}", 20, "Arial", (0, 255, 0))
     objects_loaded = Sakuya.text(f"loaded objects: {len(world.objects)}", 20, "Arial", (0, 255, 0))
-    ticks_debug = Sakuya.text(f"tick: {world.ticks_elapsed}", 20, "Arial", (0, 255, 0))
+    score_text = Sakuya.text(f"score: {score}", 20, "Arial", (0, 255, 0))
     screen.blit(fps, (0,0))
     screen.blit(objects_loaded, (0,20))
-    screen.blit(ticks_debug, (0,40))
+    screen.blit(score_text, (0,40))
 
     # loop
     pygame.display.update()
     sak_time.update()
+    for b in buttons: b.update()
     delta_time = 1 / clock.tick(60)
 
 current_scene = main_menu

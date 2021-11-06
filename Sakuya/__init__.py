@@ -1,5 +1,7 @@
 from pygame import __version__ as pg_ver
 
+from .errorhandler import *
+
 from .ai import *
 from .animation import *
 from .bossbar import *
