@@ -238,10 +238,10 @@ def game_scene():
 
     # Adds player movement
     movement = Vector(0, 0)
-    if is_moving_up: movement += Vector(0, -to_pixels(PLAYER.speed))
-    if is_moving_down: movement += Vector(0, to_pixels(PLAYER.speed))
-    if is_moving_right: movement += Vector(to_pixels(PLAYER.speed), 0)
-    if is_moving_left: movement += Vector(-to_pixels(PLAYER.speed), 0)
+    if is_moving_up: movement.y = -to_pixels(PLAYER.speed)
+    if is_moving_down: movement.y = to_pixels(PLAYER.speed)
+    if is_moving_right: movement.x = to_pixels(PLAYER.speed)
+    if is_moving_left: movement.x = -to_pixels(PLAYER.speed)
     PLAYER.position += movement
 
     # Test for collisions
