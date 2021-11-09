@@ -10,5 +10,5 @@ Uses the [Sakuya](https://github.com/novialriptide/Sakuya) Game Engine
 ```
 S    - Start
 Z    - Shoot
-WASD - Move
+Arrow Keys - Move
 ```
