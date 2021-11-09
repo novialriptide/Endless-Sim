@@ -5,3 +5,10 @@ Uses the [Sakuya](https://github.com/novialriptide/Sakuya) Game Engine
 
 ## Developers
 1. [Andrew Hong](https://github.com/novialriptide)
+
+## Controls
+`
+S    - Start
+Z    - Shoot
+WASD - Move
+`
